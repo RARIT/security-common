@@ -148,7 +148,7 @@ class BlobStorage:
         blob_client.upload_blob(
             json.dumps(
                 data,
-                indent=2
+                indent=2,
                 sort_keys=True
             ),
             overwrite=True
