@@ -62,8 +62,8 @@ ACCOUNT_NAME=securityplatformstorage
 CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ASSETS_CONTAINER=assets
 FINDINGS_CONTAINER=findings
-SECURITY_ASSETS_FILE=security-assets.json
-SECURITY_PLATFORMS_FILE=security-platforms.json
+SECURITY_ASSETS_FILE=assets.json
+SECURITY_PLATFORMS_FILE=platforms.json
 LOG_LEVEL=INFO
 ```
 
@@ -74,8 +74,8 @@ LOG_LEVEL=INFO
 ```text
 assets/
 │
-├── security-assets.json
-└── security-platforms.json
+├── assets.json
+└── platforms.json
 
 findings/
 │
