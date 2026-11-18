@@ -1,11 +1,10 @@
+import json
 from datetime import datetime
 from pathlib import Path
 
 from .blob import BlobStorage
 from .config import FINDINGS_CONTAINER
-
 from .logger import get_logger
-
 
 logger = get_logger("findings")
 
@@ -13,8 +12,85 @@ logger = get_logger("findings")
 class FindingsManager:
 
     def __init__(self):
-
         self.storage = BlobStorage()
+
+    def create_result(
+        self,
+        scanner_name: str,
+        targets: int,
+        findings: list
+    ) -> dict:
+        """
+        Create a standardized result structure
+        used by all scanners.
+        """
+
+        severity_count = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "info": 0
+        }
+
+        for finding in findings:
+
+            severity = (
+                finding.get(
+                    "severity",
+                    "info"
+                )
+                .lower()
+            )
+
+            if severity in severity_count:
+                severity_count[
+                    severity
+                ] += 1
+
+        return {
+            "scanner": scanner_name,
+            "status": "SUCCESS",
+            "timestamp": (
+                datetime.utcnow().isoformat()
+                + "Z"
+            ),
+            "summary": {
+                "targets": targets,
+                "findings": len(findings),
+                **severity_count
+            },
+            "findings": findings
+        }
+
+    def create_empty_result(
+        self,
+        scanner_name: str,
+        targets: int = 0
+    ) -> dict:
+        """
+        Create an empty result structure
+        when no findings were detected.
+        """
+
+        return {
+            "scanner": scanner_name,
+            "status": "SUCCESS",
+            "timestamp": (
+                datetime.utcnow().isoformat()
+                + "Z"
+            ),
+            "summary": {
+                "targets": targets,
+                "findings": 0,
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "info": 0
+            },
+            "findings": []
+        }
 
     def upload_latest(
         self,
@@ -74,35 +150,4 @@ class FindingsManager:
     ) -> None:
 
         logger.info(
-            "Uploading JSON findings for '%s'",
-            scanner_name
-        )
-
-        blob_name = (
-            f"{scanner_name}/latest.json"
-        )
-
-        self.storage.upload_json(
-            FINDINGS_CONTAINER,
-            blob_name,
-            data
-        )
-
-    def download_latest(
-        self,
-        scanner_name: str
-    ) -> dict | list:
-
-        blob_name = (
-            f"{scanner_name}/latest.json"
-        )
-
-        logger.info(
-            "Downloading latest findings for '%s'",
-            scanner_name
-        )
-
-        return self.storage.download_json(
-            FINDINGS_CONTAINER,
-            blob_name
-        )
+            "Uploading JSON findings for '%s'"
