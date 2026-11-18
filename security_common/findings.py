@@ -151,3 +151,28 @@ class FindingsManager:
 
         logger.info(
             "Uploading JSON findings for '%s'"
+
+    def publish(
+        self,
+        scanner_name: str,
+        local_file: str
+    ) -> None:
+        """
+        Publish findings by updating the latest
+        result and creating an archive copy.
+        """
+
+        logger.info(
+            "Publishing findings for '%s'",
+            scanner_name
+        )
+
+        self.upload_latest(
+            scanner_name,
+            local_file
+        )
+
+        self.upload_archive(
+            scanner_name,
+            local_file
+        )            
