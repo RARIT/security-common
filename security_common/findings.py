@@ -1,4 +1,5 @@
 import json
+
 from datetime import datetime
 from pathlib import Path
 
@@ -69,8 +70,7 @@ class FindingsManager:
         targets: int = 0
     ) -> dict:
         """
-        Create an empty result structure
-        when no findings were detected.
+        Create an empty standardized result.
         """
 
         return {
@@ -91,6 +91,28 @@ class FindingsManager:
             },
             "findings": []
         }
+
+    def save_result_file(
+        self,
+        local_file: str,
+        result: dict
+    ) -> None:
+        """
+        Save a standardized result object
+        to a local JSON file.
+        """
+
+        with open(
+            local_file,
+            "w",
+            encoding="utf-8"
+        ) as file_handle:
+
+            json.dump(
+                result,
+                file_handle,
+                indent=2
+            )
 
     def upload_latest(
         self,
@@ -143,23 +165,14 @@ class FindingsManager:
             local_file
         )
 
-    def upload_json(
-        self,
-        scanner_name: str,
-        data: dict | list
-    ) -> None:
-
-        logger.info(
-            "Uploading JSON findings for '%s'"
-
     def publish(
         self,
         scanner_name: str,
         local_file: str
     ) -> None:
         """
-        Publish findings by updating the latest
-        result and creating an archive copy.
+        Publish findings by updating latest
+        and creating an archive copy.
         """
 
         logger.info(
@@ -175,4 +188,44 @@ class FindingsManager:
         self.upload_archive(
             scanner_name,
             local_file
-        )            
+        )
+
+    def upload_json(
+        self,
+        scanner_name: str,
+        data: dict | list
+    ) -> None:
+
+        logger.info(
+            "Uploading JSON findings for '%s'",
+            scanner_name
+        )
+
+        blob_name = (
+            f"{scanner_name}/latest.json"
+        )
+
+        self.storage.upload_json(
+            FINDINGS_CONTAINER,
+            blob_name,
+            data
+        )
+
+    def download_latest(
+        self,
+        scanner_name: str
+    ) -> dict | list:
+
+        blob_name = (
+            f"{scanner_name}/latest.json"
+        )
+
+        logger.info(
+            "Downloading latest findings for '%s'",
+            scanner_name
+        )
+
+        return self.storage.download_json(
+            FINDINGS_CONTAINER,
+            blob_name
+        )
