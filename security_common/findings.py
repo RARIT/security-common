@@ -1,6 +1,6 @@
 import json
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .blob import BlobStorage
@@ -18,12 +18,11 @@ class FindingsManager:
     def create_result(
         self,
         scanner_name: str,
-        targets: int,
+        targets: list,
         findings: list
     ) -> dict:
         """
-        Create a standardized result structure
-        used by all scanners.
+        Create a standardized result structure.
         """
 
         severity_count = {
@@ -40,11 +39,11 @@ class FindingsManager:
                 finding.get(
                     "severity",
                     "info"
-                )
-                .lower()
+                ).lower()
             )
 
             if severity in severity_count:
+
                 severity_count[
                     severity
                 ] += 1
@@ -53,35 +52,44 @@ class FindingsManager:
             "scanner": scanner_name,
             "status": "SUCCESS",
             "timestamp": (
-                datetime.utcnow().isoformat()
-                + "Z"
+                datetime.now(
+                    timezone.utc
+                ).isoformat()
             ),
             "summary": {
-                "targets": targets,
-                "findings": len(findings),
+                "targets": len(
+                    targets
+                ),
+                "findings": len(
+                    findings
+                ),
                 **severity_count
             },
+            "targets": targets,
             "findings": findings
         }
 
     def create_empty_result(
         self,
         scanner_name: str,
-        targets: int = 0
+        targets: list
     ) -> dict:
         """
-        Create an empty standardized result.
+        Create an empty scanner result.
         """
 
         return {
             "scanner": scanner_name,
             "status": "SUCCESS",
             "timestamp": (
-                datetime.utcnow().isoformat()
-                + "Z"
+                datetime.now(
+                    timezone.utc
+                ).isoformat()
             ),
             "summary": {
-                "targets": targets,
+                "targets": len(
+                    targets
+                ),
                 "findings": 0,
                 "critical": 0,
                 "high": 0,
@@ -89,6 +97,7 @@ class FindingsManager:
                 "low": 0,
                 "info": 0
             },
+            "targets": targets,
             "findings": []
         }
 
@@ -98,8 +107,7 @@ class FindingsManager:
         result: dict
     ) -> None:
         """
-        Save a standardized result object
-        to a local JSON file.
+        Save result object to local JSON file.
         """
 
         with open(
@@ -141,7 +149,9 @@ class FindingsManager:
         local_file: str
     ) -> None:
 
-        timestamp = datetime.utcnow().strftime(
+        timestamp = datetime.now(
+            timezone.utc
+        ).strftime(
             "%Y%m%d-%H%M%S"
         )
 
@@ -170,10 +180,6 @@ class FindingsManager:
         scanner_name: str,
         local_file: str
     ) -> None:
-        """
-        Publish findings by updating latest
-        and creating an archive copy.
-        """
 
         logger.info(
             "Publishing findings for '%s'",
@@ -196,11 +202,6 @@ class FindingsManager:
         data: dict | list
     ) -> None:
 
-        logger.info(
-            "Uploading JSON findings for '%s'",
-            scanner_name
-        )
-
         blob_name = (
             f"{scanner_name}/latest.json"
         )
@@ -218,11 +219,6 @@ class FindingsManager:
 
         blob_name = (
             f"{scanner_name}/latest.json"
-        )
-
-        logger.info(
-            "Downloading latest findings for '%s'",
-            scanner_name
         )
 
         return self.storage.download_json(
